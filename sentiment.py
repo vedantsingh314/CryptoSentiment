@@ -1,18 +1,32 @@
 from transformers import pipeline
 from utils import detect_coin
 
-classifier = pipeline("sentiment-analysis")
+# 🔥 Lazy loading (IMPORTANT FIX)
+classifier = None
+
+def get_model():
+    global classifier
+    if classifier is None:
+        print("Loading sentiment model...")
+        classifier = pipeline("sentiment-analysis")
+    return classifier
+
 
 def analyze(news_list):
     results = {}
 
+    model = get_model()  # ✅ load once when needed
+
     for text in news_list:
         coin = detect_coin(text)
         print(text)
+
         if not coin:
             continue
 
-        output = classifier(text)[0]
+        # ✅ use model instead of classifier
+        output = model(text)[0]
+
         sentiment = output["label"]
         confidence = output["score"]
 
@@ -25,6 +39,8 @@ def analyze(news_list):
         })
 
     return results
+
+
 def aggregate(results):
     final = {}
 
@@ -53,7 +69,3 @@ def aggregate(results):
         }
 
     return final
-
-
-
-
